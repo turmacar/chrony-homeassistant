@@ -1,0 +1,144 @@
+# HACS-enhanced Lovelace cards.
+# Required HACS frontend cards (install all three before using):
+#   - mushroom            https://github.com/piitaya/lovelace-mushroom
+#   - mini-graph-card     https://github.com/kalkih/mini-graph-card
+#   - flex-table-card     https://github.com/custom-cards/flex-table-card
+#
+# Add this as a single card to any dashboard view.
+# Entity IDs follow HA defaults from sensor names in mqtt_chrony.yaml;
+# adjust if your instance assigned different IDs.
+
+type: vertical-stack
+cards:
+  # Color-coded status chips: stratum (green <=3, yellow <=7, red >7),
+  # leap status (green = Normal), GPS state (green = synced/acceptable)
+  - type: custom:mushroom-chips-card
+    chips:
+      - type: template
+        entity: sensor.chrony_stratum
+        content: "Str {{ states(config.entity) }}"
+        icon: mdi:layers-triple
+        icon_color: >-
+          {% set s = states(config.entity) | int(99) %}
+          {% if s <= 3 %}green{% elif s <= 7 %}yellow{% else %}red{% endif %}
+      - type: template
+        entity: sensor.chrony_leap_status
+        content: "{{ states(config.entity) }}"
+        icon: mdi:clock-alert-outline
+        icon_color: >-
+          {{ 'green' if states(config.entity) == 'Normal' else 'red' }}
+      - type: entity
+        entity: sensor.chrony_reference_source
+        icon: mdi:server-network
+      - type: template
+        entity: sensor.chrony_local_reference_state
+        content: "GPS: {{ states(config.entity) }}"
+        icon: mdi:satellite-variant
+        icon_color: >-
+          {% set s = states(config.entity) %}
+          {% if 'synced' in s or 'acceptable' in s %}green
+          {% elif s == 'unknown' %}grey
+          {% else %}red{% endif %}
+      - type: entity
+        entity: sensor.chrony_current_reference_reach
+        icon: mdi:signal
+
+  # Sparkline graphs: offset pair and delay/dispersion pair side by side
+  - type: horizontal-stack
+    cards:
+      - type: custom:mini-graph-card
+        name: Offset (s)
+        entities:
+          - entity: sensor.chrony_last_offset
+            name: Last
+          - entity: sensor.chrony_rms_offset
+            name: RMS
+        hours_to_show: 24
+        points_per_hour: 4
+        line_width: 2
+        font_size: 75
+        show:
+          legend: true
+          extrema: true
+      - type: custom:mini-graph-card
+        name: Root Delay + Dispersion (s)
+        entities:
+          - entity: sensor.chrony_root_delay
+            name: Delay
+          - entity: sensor.chrony_root_dispersion
+            name: Dispersion
+        hours_to_show: 24
+        points_per_hour: 4
+        line_width: 2
+        font_size: 75
+        show:
+          legend: true
+          extrema: true
+
+  - type: custom:mini-graph-card
+    name: Frequency + Skew (ppm)
+    entities:
+      - entity: sensor.chrony_frequency
+        name: Frequency
+      - entity: sensor.chrony_skew
+        name: Skew
+    hours_to_show: 24
+    points_per_hour: 4
+    line_width: 2
+    font_size: 75
+    show:
+      legend: true
+      extrema: true
+
+  # Sources table -- iterates the 'sources' attribute JSON array.
+  # If flex-table-card shows nothing, confirm the attribute name with
+  # Developer Tools > States > sensor.chrony_sources > Attributes.
+  - type: custom:flex-table-card
+    title: Sources
+    entities:
+      include: sensor.chrony_sources
+    columns:
+      - name: Mode
+        data: sources
+        modify: x.mode_display
+      - name: State
+        data: sources
+        modify: x.state_display
+      - name: Name
+        data: sources
+        modify: x.name
+      - name: Str
+        data: sources
+        modify: x.stratum
+      - name: Poll
+        data: sources
+        modify: x.poll
+      - name: Reach
+        data: sources
+        modify: x.reach_human
+      - name: Offset (s)
+        data: sources
+        modify: x.offset
+      - name: Margin (s)
+        data: sources
+        modify: x.margin
+    css:
+      table+: "font-size: 0.85em;"
+
+  # Current reference and GPS local reference detail
+  - type: horizontal-stack
+    cards:
+      - type: entities
+        title: Current Reference
+        entities:
+          - entity: sensor.chrony_current_reference_offset
+          - entity: sensor.chrony_current_reference_margin
+          - entity: sensor.chrony_current_reference_poll_interval
+          - entity: sensor.chrony_current_reference_reach
+      - type: entities
+        title: Local Reference (GPS)
+        entities:
+          - entity: sensor.chrony_local_reference_state
+          - entity: sensor.chrony_local_reference_reach
+          - entity: sensor.chrony_local_reference_offset
+          - entity: sensor.chrony_local_reference_margin

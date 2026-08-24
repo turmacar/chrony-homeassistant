@@ -1,0 +1,112 @@
+# Built-in Lovelace cards only -- no HACS required.
+# Add this as a single card to any dashboard view.
+# Entity IDs follow HA defaults from sensor names in mqtt_chrony.yaml;
+# adjust if your instance assigned different IDs.
+
+type: vertical-stack
+cards:
+  # Status summary: compact glance + stratum gauge
+  - type: horizontal-stack
+    cards:
+      - type: glance
+        title: Chrony NTP
+        show_name: true
+        show_state: true
+        columns: 3
+        entities:
+          - entity: sensor.chrony_stratum
+            name: Stratum
+          - entity: sensor.chrony_leap_status
+            name: Leap Status
+          - entity: sensor.chrony_reference_source
+            name: Ref Source
+          - entity: sensor.chrony_number_of_sources
+            name: Sources
+          - entity: sensor.chrony_current_reference_reach
+            name: Ref Reach
+          - entity: sensor.chrony_local_reference_state
+            name: GPS
+      - type: gauge
+        title: Stratum
+        entity: sensor.chrony_stratum
+        min: 0
+        max: 16
+        needle: true
+        severity:
+          green: 0
+          yellow: 4
+          red: 8
+
+  # Offset trend
+  - type: history-graph
+    title: Offset (s)
+    hours_to_show: 24
+    entities:
+      - entity: sensor.chrony_last_offset
+        name: Last Offset
+      - entity: sensor.chrony_rms_offset
+        name: RMS Offset
+
+  # Frequency/skew and root delay/dispersion side by side
+  - type: horizontal-stack
+    cards:
+      - type: history-graph
+        title: Frequency + Skew (ppm)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.chrony_frequency
+            name: Frequency
+          - entity: sensor.chrony_skew
+            name: Skew
+      - type: history-graph
+        title: Root Delay + Dispersion (s)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.chrony_root_delay
+            name: Root Delay
+          - entity: sensor.chrony_root_dispersion
+            name: Root Dispersion
+
+  # Full detail: tracking on the left, current ref + GPS ref stacked on the right
+  - type: horizontal-stack
+    cards:
+      - type: entities
+        title: Tracking
+        entities:
+          - entity: sensor.chrony_stratum
+          - entity: sensor.chrony_leap_status
+          - entity: sensor.chrony_reference_source
+          - entity: sensor.chrony_last_offset
+          - entity: sensor.chrony_rms_offset
+          - entity: sensor.chrony_frequency
+          - entity: sensor.chrony_skew
+          - entity: sensor.chrony_root_delay
+          - entity: sensor.chrony_root_dispersion
+          - entity: sensor.chrony_number_of_sources
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Current Reference
+            entities:
+              - entity: sensor.chrony_current_reference_offset
+              - entity: sensor.chrony_current_reference_margin
+              - entity: sensor.chrony_current_reference_poll_interval
+              - entity: sensor.chrony_current_reference_reach
+          - type: entities
+            title: Local Reference (GPS)
+            entities:
+              - entity: sensor.chrony_local_reference_state
+              - entity: sensor.chrony_local_reference_reach
+              - entity: sensor.chrony_local_reference_offset
+              - entity: sensor.chrony_local_reference_margin
+
+  # Sources table built from the 'sources' attribute array via Jinja2
+  - type: markdown
+    title: Sources
+    content: |
+      {%- set sources = state_attr('sensor.chrony_sources', 'sources') | default([]) %}
+      | Mode | State | Name | Str | Poll | Reach | Offset (s) | Margin (s) |
+      |:----:|:-----:|:-----|:---:|-----:|:-----:|-----------:|-----------:|
+      {% for s in sources %}| `{{ s.mode }}` | `{{ s.state }}` | {{ s.name }} | {{ s.stratum }} | {{ s.poll }} | {{ s.reach_human }} | {{ s.offset }} | {{ s.margin }} |
+      {% endfor %}
+      *`^` server &nbsp; `=` peer &nbsp; `#` local clock &nbsp;&nbsp; `*` synced &nbsp; `+` acceptable &nbsp; `-` excluded &nbsp; `?` unreachable*
