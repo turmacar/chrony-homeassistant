@@ -1,0 +1,9 @@
+# --- secrets / local config ---
+scripts/chrony-mqtt.sh.local
+*.local
+*.local.md
+
+# --- editor ---
+.vscode/
+*.swp
+*~

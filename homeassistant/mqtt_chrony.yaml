@@ -1,0 +1,214 @@
+# Chrony status sensors, published via MQTT by chrony-mqtt.sh on the chrony Pi.
+# Included from configuration.yaml as: mqtt: !include mqtt_chrony.yaml
+#
+# Replace YOUR_HOSTNAME throughout this file with the actual hostname of the Pi
+# running chrony-mqtt.sh (should match what `hostname` returns on that machine).
+#
+# The `device:` block on each sensor is what groups them together in HA -
+# every sensor below shares the same `identifiers` value, so HA treats them
+# as one device (Settings > Devices & Services > Devices > Chrony).
+
+sensor:
+  - name: "Chrony Stratum"
+    unique_id: chrony_stratum
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.stratum }}"
+    icon: mdi:layers-triple
+    state_class: measurement
+    device: &chrony_device
+      identifiers: "chrony_YOUR_HOSTNAME"
+      name: "Chrony (YOUR_HOSTNAME)"
+      manufacturer: "chrony"
+      model: "NTP client"
+
+  - name: "Chrony Leap Status"
+    unique_id: chrony_leap_status
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.leap_status }}"
+    icon: mdi:clock-alert-outline
+    device: *chrony_device
+
+  - name: "Chrony Last Offset"
+    unique_id: chrony_last_offset
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.last_offset }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:clock-fast
+    device: *chrony_device
+
+  - name: "Chrony RMS Offset"
+    unique_id: chrony_rms_offset
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.rms_offset }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:sigma
+    device: *chrony_device
+
+  - name: "Chrony Frequency"
+    unique_id: chrony_frequency
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.frequency }}"
+    unit_of_measurement: "ppm"
+    state_class: measurement
+    icon: mdi:sine-wave
+    device: *chrony_device
+
+  - name: "Chrony Skew"
+    unique_id: chrony_skew
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.skew }}"
+    unit_of_measurement: "ppm"
+    state_class: measurement
+    icon: mdi:pulse
+    device: *chrony_device
+
+  - name: "Chrony Root Delay"
+    unique_id: chrony_root_delay
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.root_delay }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:transit-connection-variant
+    device: *chrony_device
+
+  - name: "Chrony Root Dispersion"
+    unique_id: chrony_root_dispersion
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.root_dispersion }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:blur
+    device: *chrony_device
+
+  - name: "Chrony Reference Source"
+    unique_id: chrony_ref_source
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.ref_source }}"
+    icon: mdi:satellite-variant
+    device: *chrony_device
+
+  - name: "Chrony Number of Sources"
+    unique_id: chrony_num_sources
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.num_sources }}"
+    state_class: measurement
+    icon: mdi:counter
+    device: *chrony_device
+
+  # Full per-source detail (mode/state/name/stratum/poll/reach/last_rx/offset/margin)
+  # from `chronyc -c sources`, exposed as this sensor's attributes.
+  # mode_display/state_display are computed here via lookup maps, translating
+  # chrony's single-character codes into plaintext alongside the raw symbol.
+  - name: "Chrony Sources"
+    unique_id: chrony_sources_detail
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: "{{ value_json | length }}"
+    json_attributes_topic: "chrony/YOUR_HOSTNAME/sources"
+    json_attributes_template: >-
+      {%- set mode_map = {'^': 'server', '=': 'peer', '#': 'local reference clock'} -%}
+      {%- set state_map = {'*': 'synced', '+': 'acceptable', '-': 'excluded',
+                            '?': 'unreachable', 'x': 'falseticker', '~': 'too variable'} -%}
+      {%- set ns = namespace(sources=[]) -%}
+      {%- for src in value_json -%}
+        {%- set enriched = dict(src,
+              mode_display = src.mode ~ ' (' ~ mode_map.get(src.mode, 'unknown') ~ ')',
+              state_display = src.state ~ ' (' ~ state_map.get(src.state, 'unknown') ~ ')') -%}
+        {%- set ns.sources = ns.sources + [enriched] -%}
+      {%- endfor -%}
+      {{ {'sources': ns.sources} | tojson }}
+    icon: mdi:format-list-bulleted
+    device: *chrony_device
+
+  # --- Current reference source (the entry with state == '*') ---
+  # These pick that one entry out of the sources array and expose its
+  # fields individually. If no source is currently selected, each of
+  # these reports "unknown" rather than erroring.
+
+  - name: "Chrony Current Reference Offset"
+    unique_id: chrony_current_ref_offset
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('state','equalto','*') | list | first
+          | default({})).get('offset', 'unknown') }}
+    unit_of_measurement: "s"
+    icon: mdi:clock-fast
+    device: *chrony_device
+
+  - name: "Chrony Current Reference Margin"
+    unique_id: chrony_current_ref_margin
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('state','equalto','*') | list | first
+          | default({})).get('margin', 'unknown') }}
+    unit_of_measurement: "s"
+    icon: mdi:ruler
+    device: *chrony_device
+
+  - name: "Chrony Current Reference Poll Interval"
+    unique_id: chrony_current_ref_poll
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('state','equalto','*') | list | first
+          | default({})).get('poll', 'unknown') }}
+    unit_of_measurement: "log2 s"
+    icon: mdi:timer-sync-outline
+    device: *chrony_device
+
+  - name: "Chrony Current Reference Reach"
+    unique_id: chrony_current_ref_reach
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('state','equalto','*') | list | first
+          | default({})).get('reach_human', 'unknown') }}
+    icon: mdi:signal
+    device: *chrony_device
+
+  # --- Local reference clock (mode == '#'), e.g. a GPS/PPS source ---
+  # If you don't have one configured, these will report "unknown" rather
+  # than erroring - that's expected, not a sign something's broken.
+
+  - name: "Chrony Local Reference State"
+    unique_id: chrony_local_ref_state
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {%- set state_map = {'*': 'synced', '+': 'acceptable', '-': 'excluded',
+                            '?': 'unreachable', 'x': 'falseticker', '~': 'too variable'} -%}
+      {%- set src = (value_json | selectattr('mode','equalto','#') | list | first | default({})) -%}
+      {%- if src -%}
+        {{ src.state }} ({{ state_map.get(src.state, 'unknown') }})
+      {%- else -%}
+        unknown
+      {%- endif -%}
+    icon: mdi:chip
+    device: *chrony_device
+
+  - name: "Chrony Local Reference Reach"
+    unique_id: chrony_local_ref_reach
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('mode','equalto','#') | list | first
+          | default({})).get('reach_human', 'unknown') }}
+    icon: mdi:signal
+    device: *chrony_device
+
+  - name: "Chrony Local Reference Offset"
+    unique_id: chrony_local_ref_offset
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('mode','equalto','#') | list | first
+          | default({})).get('offset', 'unknown') }}
+    unit_of_measurement: "s"
+    icon: mdi:clock-fast
+    device: *chrony_device
+
+  - name: "Chrony Local Reference Margin"
+    unique_id: chrony_local_ref_margin
+    state_topic: "chrony/YOUR_HOSTNAME/sources"
+    value_template: >-
+      {{ (value_json | selectattr('mode','equalto','#') | list | first
+          | default({})).get('margin', 'unknown') }}
+    unit_of_measurement: "s"
+    icon: mdi:ruler
+    device: *chrony_device

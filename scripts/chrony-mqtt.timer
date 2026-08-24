@@ -1,0 +1,10 @@
+[Unit]
+Description=Run chrony-mqtt.service every 30 seconds
+
+[Timer]
+OnBootSec=15
+OnUnitActiveSec=30
+AccuracySec=1
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Publish chrony tracking/sources status to MQTT
+After=network-online.target chronyd.service
+Wants=network-online.target
+Requires=chronyd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/chrony-mqtt.sh
