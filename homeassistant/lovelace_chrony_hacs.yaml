@@ -31,7 +31,7 @@ cards:
         entity: sensor.chrony_reference_source
         icon: mdi:server-network
       - type: template
-        entity: sensor.chrony_local_reference_state
+        entity: sensor.chrony_pihole_chrony_local_reference_state
         content: "GPS: {{ states(config.entity) }}"
         icon: mdi:satellite-variant
         icon_color: >-
@@ -40,7 +40,7 @@ cards:
           {% elif s == 'unknown' %}grey
           {% else %}red{% endif %}
       - type: entity
-        entity: sensor.chrony_current_reference_reach
+        entity: sensor.chrony_pihole_chrony_current_reference_reach
         icon: mdi:signal
 
   # Sparkline graphs: offset pair and delay/dispersion pair side by side
@@ -92,11 +92,11 @@ cards:
 
   # Sources table -- iterates the 'sources' attribute JSON array.
   # If flex-table-card shows nothing, confirm the attribute name with
-  # Developer Tools > States > sensor.chrony_sources > Attributes.
+  # Developer Tools > States > sensor.chrony_pihole_chrony_sources > Attributes.
   - type: custom:flex-table-card
     title: Sources
     entities:
-      include: sensor.chrony_sources
+      include: sensor.chrony_pihole_chrony_sources
     columns:
       - name: Mode
         data: sources
@@ -131,14 +131,14 @@ cards:
       - type: entities
         title: Current Reference
         entities:
-          - entity: sensor.chrony_current_reference_offset
-          - entity: sensor.chrony_current_reference_margin
-          - entity: sensor.chrony_current_reference_poll_interval
-          - entity: sensor.chrony_current_reference_reach
+          - entity: sensor.chrony_pihole_chrony_current_reference_offset
+          - entity: sensor.chrony_pihole_chrony_current_reference_margin
+          - entity: sensor.chrony_pihole_chrony_current_reference_poll_interval
+          - entity: sensor.chrony_pihole_chrony_current_reference_reach
       - type: entities
         title: Local Reference (GPS)
         entities:
-          - entity: sensor.chrony_local_reference_state
-          - entity: sensor.chrony_local_reference_reach
-          - entity: sensor.chrony_local_reference_offset
-          - entity: sensor.chrony_local_reference_margin
+          - entity: sensor.chrony_pihole_chrony_local_reference_state
+          - entity: sensor.chrony_pihole_chrony_local_reference_reach
+          - entity: sensor.chrony_pihole_chrony_local_reference_offset
+          - entity: sensor.chrony_pihole_chrony_local_reference_margin

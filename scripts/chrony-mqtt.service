@@ -5,5 +5,7 @@ Wants=network-online.target
 Requires=chronyd.service
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/local/bin/chrony-mqtt.sh
+Restart=on-failure
+RestartSec=5s

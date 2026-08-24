@@ -22,9 +22,9 @@ cards:
             name: Ref Source
           - entity: sensor.chrony_number_of_sources
             name: Sources
-          - entity: sensor.chrony_current_reference_reach
+          - entity: sensor.chrony_pihole_chrony_current_reference_reach
             name: Ref Reach
-          - entity: sensor.chrony_local_reference_state
+          - entity: sensor.chrony_pihole_chrony_local_reference_state
             name: GPS
       - type: gauge
         title: Stratum
@@ -88,23 +88,23 @@ cards:
           - type: entities
             title: Current Reference
             entities:
-              - entity: sensor.chrony_current_reference_offset
-              - entity: sensor.chrony_current_reference_margin
-              - entity: sensor.chrony_current_reference_poll_interval
-              - entity: sensor.chrony_current_reference_reach
+              - entity: sensor.chrony_pihole_chrony_current_reference_offset
+              - entity: sensor.chrony_pihole_chrony_current_reference_margin
+              - entity: sensor.chrony_pihole_chrony_current_reference_poll_interval
+              - entity: sensor.chrony_pihole_chrony_current_reference_reach
           - type: entities
             title: Local Reference (GPS)
             entities:
-              - entity: sensor.chrony_local_reference_state
-              - entity: sensor.chrony_local_reference_reach
-              - entity: sensor.chrony_local_reference_offset
-              - entity: sensor.chrony_local_reference_margin
+              - entity: sensor.chrony_pihole_chrony_local_reference_state
+              - entity: sensor.chrony_pihole_chrony_local_reference_reach
+              - entity: sensor.chrony_pihole_chrony_local_reference_offset
+              - entity: sensor.chrony_pihole_chrony_local_reference_margin
 
   # Sources table built from the 'sources' attribute array via Jinja2
   - type: markdown
     title: Sources
     content: |
-      {%- set sources = state_attr('sensor.chrony_sources', 'sources') | default([]) %}
+      {%- set sources = state_attr('sensor.chrony_pihole_chrony_sources', 'sources') | default([]) %}
       | Mode | State | Name | Str | Poll | Reach | Offset (s) | Margin (s) |
       |:----:|:-----:|:-----|:---:|-----:|:-----:|-----------:|-----------:|
       {% for s in sources %}| `{{ s.mode }}` | `{{ s.state }}` | {{ s.name }} | {{ s.stratum }} | {{ s.poll }} | {{ s.reach_human }} | {{ s.offset }} | {{ s.margin }} |

@@ -37,6 +37,15 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
+  - name: "Chrony System Time"
+    unique_id: chrony_system_time
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.system_time }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:clock-edit-outline
+    device: *chrony_device
+
   - name: "Chrony RMS Offset"
     unique_id: chrony_rms_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
@@ -211,4 +220,30 @@ sensor:
           | default({})).get('margin', 'unknown') }}
     unit_of_measurement: "s"
     icon: mdi:ruler
+    device: *chrony_device
+
+  # --- GPS fields promoted to the state topic ---
+  # These come from gps_state/gps_reach/gps_reach_human added to chrony/YOUR_HOSTNAME/state
+  # so they update at the same rate as the rest of the tracking data.
+
+  - name: "Chrony GPS State"
+    unique_id: chrony_gps_state
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.gps_state }}"
+    icon: mdi:satellite-variant
+    device: *chrony_device
+
+  - name: "Chrony GPS Reach"
+    unique_id: chrony_gps_reach
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.gps_reach }}"
+    state_class: measurement
+    icon: mdi:signal
+    device: *chrony_device
+
+  - name: "Chrony GPS Reach Human"
+    unique_id: chrony_gps_reach_human
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    value_template: "{{ value_json.gps_reach_human }}"
+    icon: mdi:signal
     device: *chrony_device
