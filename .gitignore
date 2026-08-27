@@ -2,6 +2,8 @@
 scripts/chrony-mqtt.sh.local
 *.local
 *.local.md
+.env
+scripts/.env
 
 # --- editor ---
 .vscode/

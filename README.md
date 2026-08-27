@@ -23,14 +23,22 @@ NTP server monitoring stack. A Raspberry Pi running chrony (optionally with a GP
 
 ### Configuration
 
-Edit `scripts/chrony-mqtt.sh` and set the four variables at the top:
+Credentials are read from environment variables, never hardcoded in the script:
+
+- **systemd (production)**: `sudo scripts/install.sh` seeds `/etc/default/chrony-mqtt`
+  from `scripts/.env.example` the first time it runs (it won't overwrite an
+  existing file on re-install). Edit that file with your broker details.
+- **manual/interactive runs**: copy `scripts/.env.example` to `scripts/.env`
+  and fill it in; the script sources it automatically if present.
 
 ```bash
-MQTT_HOST="your-mqtt-broker"   # hostname or IP of your MQTT broker
-MQTT_PORT="1883"
-MQTT_USER="your-mqtt-username"
-MQTT_PASS="your-mqtt-password"
+MQTT_HOST=your-mqtt-broker   # hostname or IP of your MQTT broker
+MQTT_PORT=1883
+MQTT_USER=your-mqtt-username
+MQTT_PASS=your-mqtt-password
 ```
+
+Neither `/etc/default/chrony-mqtt` nor `scripts/.env` are committed to git.
 
 The topic base defaults to `chrony/<hostname>` using the Pi's hostname.
 

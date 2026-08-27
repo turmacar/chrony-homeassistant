@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- Config: edit these for your setup ---
-MQTT_HOST="your-mqtt-broker"   # hostname or IP of your MQTT broker
-MQTT_PORT="1883"
-MQTT_USER="your-mqtt-username" # remove -u/-P from publish() below if no auth needed
-MQTT_PASS="your-mqtt-password"
+# --- Config: values come from the environment. Under systemd this is populated
+# by EnvironmentFile=/etc/default/chrony-mqtt (see chrony-mqtt.service). For
+# manual/interactive runs, a .env file next to this script is sourced instead.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$SCRIPT_DIR/.env"
+  set +a
+fi
+
+MQTT_HOST="${MQTT_HOST:?Set MQTT_HOST in /etc/default/chrony-mqtt or scripts/.env}"
+MQTT_PORT="${MQTT_PORT:-1883}"
+MQTT_USER="${MQTT_USER:?Set MQTT_USER in /etc/default/chrony-mqtt or scripts/.env}" # remove -u/-P from publish() below if no auth needed
+MQTT_PASS="${MQTT_PASS:?Set MQTT_PASS in /etc/default/chrony-mqtt or scripts/.env}"
 MQTT_BASE_TOPIC="chrony/$(hostname)"
-INTERVAL=30  # seconds between polls
+INTERVAL="${INTERVAL:-30}"  # seconds between polls
 
 publish() {
   mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" \
@@ -56,6 +66,13 @@ poll_and_publish() {
   gps_state="unknown"
   gps_reach_int=0
   gps_reach_human="0/8"
+  current_ref_offset=0
+  current_ref_margin=0
+  current_ref_poll=0
+  current_ref_reach=0
+  local_ref_offset=0
+  local_ref_margin=0
+  local_ref_reach=0
   sources_json="["
   first=true
 
@@ -65,12 +82,23 @@ poll_and_publish() {
     num_sources=$((num_sources + 1))
     local_name="$(resolve_name "$name")"
     [ "$state" = "*" ] && ref_source="$local_name"
+      if [ "$state" = "*" ]; then
+        current_ref_offset="$offset"
+        current_ref_margin="$margin"
+        current_ref_poll="$poll"
+        current_ref_reach="$(reach_to_int "$reach")"
+      fi
     # Capture GPS/local-reference clock fields for inclusion in the state payload
     if [ "$mode" = "#" ]; then
       gps_state="$state"
       gps_reach_human="$(reach_to_human "$reach")"
       gps_reach_int="$(reach_to_int "$reach")"
     fi
+      if [ "$mode" = "#" ]; then
+        local_ref_offset="$offset"
+        local_ref_margin="$margin"
+        local_ref_reach="$(reach_to_int "$reach")"
+      fi
     rh="$(reach_to_human "$reach")"
     entry="{\"mode\":\"$mode\",\"state\":\"$state\",\"name\":\"$local_name\",\"stratum\":$src_stratum,\"poll\":$poll,\"reach\":\"$reach\",\"reach_human\":\"$rh\",\"last_rx\":\"$lastrx\",\"offset\":$offset,\"offset_stdev\":$offset_stdev,\"margin\":$margin}"
     if $first; then sources_json="$sources_json$entry"; first=false
@@ -94,7 +122,14 @@ poll_and_publish() {
     \"num_sources\": $num_sources,
     \"gps_state\": \"$gps_state\",
     \"gps_reach\": $gps_reach_int,
-    \"gps_reach_human\": \"$gps_reach_human\"
+    \"gps_reach_human\": \"$gps_reach_human\",
+    \"current_ref_offset\": $current_ref_offset,
+    \"current_ref_margin\": $current_ref_margin,
+    \"current_ref_poll\": $current_ref_poll,
+    \"current_ref_reach\": $current_ref_reach,
+    \"local_ref_offset\": $local_ref_offset,
+    \"local_ref_margin\": $local_ref_margin,
+    \"local_ref_reach\": $local_ref_reach
   }"
 }
 

@@ -6,6 +6,7 @@ Requires=chronyd.service
 
 [Service]
 Type=simple
+EnvironmentFile=-/etc/default/chrony-mqtt
 ExecStart=/usr/local/bin/chrony-mqtt.sh
 Restart=on-failure
 RestartSec=5s
