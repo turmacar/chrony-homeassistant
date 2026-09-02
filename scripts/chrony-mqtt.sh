@@ -66,13 +66,12 @@ poll_and_publish() {
   gps_state="unknown"
   gps_reach_int=0
   gps_reach_human="0/8"
+  gps_offset=0
+  gps_margin=0
   current_ref_offset=0
   current_ref_margin=0
   current_ref_poll=0
   current_ref_reach=0
-  local_ref_offset=0
-  local_ref_margin=0
-  local_ref_reach=0
   sources_json="["
   first=true
 
@@ -88,17 +87,18 @@ poll_and_publish() {
         current_ref_poll="$poll"
         current_ref_reach="$(reach_to_int "$reach")"
       fi
-    # Capture GPS/local-reference clock fields for inclusion in the state payload
+    # Capture the local reference clock (mode '#') for the state payload. When
+    # multiple '#' refclocks are configured (e.g. NMEA + PPS/GPS), chronyc
+    # lists them in chrony.conf order and this keeps overwriting, so it ends
+    # up reflecting whichever one is configured LAST -- the intended GPS/PPS
+    # source, since NMEA is normally listed first with `noselect`.
     if [ "$mode" = "#" ]; then
       gps_state="$state"
       gps_reach_human="$(reach_to_human "$reach")"
       gps_reach_int="$(reach_to_int "$reach")"
+      gps_offset="$offset"
+      gps_margin="$margin"
     fi
-      if [ "$mode" = "#" ]; then
-        local_ref_offset="$offset"
-        local_ref_margin="$margin"
-        local_ref_reach="$(reach_to_int "$reach")"
-      fi
     rh="$(reach_to_human "$reach")"
     entry="{\"mode\":\"$mode\",\"state\":\"$state\",\"name\":\"$local_name\",\"stratum\":$src_stratum,\"poll\":$poll,\"reach\":\"$reach\",\"reach_human\":\"$rh\",\"last_rx\":\"$lastrx\",\"offset\":$offset,\"offset_stdev\":$offset_stdev,\"margin\":$margin}"
     if $first; then sources_json="$sources_json$entry"; first=false
@@ -123,87 +123,12 @@ poll_and_publish() {
     \"gps_state\": \"$gps_state\",
     \"gps_reach\": $gps_reach_int,
     \"gps_reach_human\": \"$gps_reach_human\",
+    \"gps_offset\": $gps_offset,
+    \"gps_margin\": $gps_margin,
     \"current_ref_offset\": $current_ref_offset,
     \"current_ref_margin\": $current_ref_margin,
     \"current_ref_poll\": $current_ref_poll,
-    \"current_ref_reach\": $current_ref_reach,
-    \"local_ref_offset\": $local_ref_offset,
-    \"local_ref_margin\": $local_ref_margin,
-    \"local_ref_reach\": $local_ref_reach
-  }"
-}
-
-while true; do
-  poll_and_publish || true
-  sleep "$INTERVAL"
-done
-
-
-publish() {
-  mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" \
-    -u "$MQTT_USER" -P "$MQTT_PASS" \
-    -t "$1" -m "$2" -r
-}
-
-# Convert 8-bit octal reach mask to count of successful polls out of 8
-reach_to_human() {
-  local dec=$((8#$1)) count=0 i
-  for i in 0 1 2 3 4 5 6 7; do (( (dec >> i) & 1 )) && count=$((count + 1)); done
-  echo "$count/8"
-}
-
-# Convert 8-bit octal reach mask to plain integer (for Telegraf/InfluxDB)
-reach_to_int() {
-  local dec=$((8#$1)) count=0 i
-  for i in 0 1 2 3 4 5 6 7; do (( (dec >> i) & 1 )) && count=$((count + 1)); done
-  echo "$count"
-}
-
-poll_and_publish() {
-  IFS=',' read -r ref_id ref_ip stratum ref_time sys_time last_offset \
-    rms_offset frequency residual_freq skew root_delay root_dispersion \
-    update_interval leap_status < <(chronyc -c tracking)
-
-  ref_source="unknown"
-  num_sources=0
-  gps_state="unknown"
-  gps_reach_int=0
-  gps_reach_human="0/8"
-  sources_json="["
-  first=true
-
-  while IFS=',' read -r mode state name src_stratum poll reach lastrx offset margin; do
-    num_sources=$((num_sources + 1))
-    [ "$state" = "*" ] && ref_source="$name"
-    # Capture GPS/local-reference clock fields for inclusion in the state payload
-    if [ "$mode" = "#" ]; then
-      gps_state="$state"
-      gps_reach_human="$(reach_to_human "$reach")"
-      gps_reach_int="$(reach_to_int "$reach")"
-    fi
-    rh="$(reach_to_human "$reach")"
-    entry="{\"mode\":\"$mode\",\"state\":\"$state\",\"name\":\"$name\",\"stratum\":$src_stratum,\"poll\":$poll,\"reach\":\"$reach\",\"reach_human\":\"$rh\",\"last_rx\":\"$lastrx\",\"offset\":\"$offset\",\"margin\":\"$margin\"}"
-    if $first; then sources_json="$sources_json$entry"; first=false
-    else sources_json="$sources_json,$entry"; fi
-  done < <(chronyc -c sources)
-  sources_json="$sources_json]"
-
-  publish "$MQTT_BASE_TOPIC/sources" "$sources_json"
-
-  publish "$MQTT_BASE_TOPIC/state" "{
-    \"stratum\": $stratum,
-    \"leap_status\": \"$leap_status\",
-    \"last_offset\": $last_offset,
-    \"rms_offset\": $rms_offset,
-    \"frequency\": $frequency,
-    \"skew\": $skew,
-    \"root_delay\": $root_delay,
-    \"root_dispersion\": $root_dispersion,
-    \"ref_source\": \"$ref_source\",
-    \"num_sources\": $num_sources,
-    \"gps_state\": \"$gps_state\",
-    \"gps_reach\": $gps_reach_int,
-    \"gps_reach_human\": \"$gps_reach_human\"
+    \"current_ref_reach\": $current_ref_reach
   }"
 }
 

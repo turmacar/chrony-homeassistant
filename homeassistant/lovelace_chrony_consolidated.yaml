@@ -1,0 +1,34 @@
+# Single consolidated card -- everything from the builtin/HACS dashboards
+# folded into one markdown card. No extra HACS dependencies beyond what's
+# already used elsewhere in this repo (none, actually -- markdown is builtin).
+# Entity IDs follow HA defaults from sensor names in mqtt_chrony.yaml;
+# adjust if your instance assigned different IDs.
+
+type: markdown
+title: Chrony NTP
+content: |
+  {%- set stratum = states('sensor.chrony_stratum') %}
+  {%- set leap = states('sensor.chrony_leap_status') %}
+  {%- set ref = states('sensor.chrony_reference_source') %}
+  {%- set num_sources = states('sensor.chrony_number_of_sources') %}
+  {%- set gps_state = states('sensor.chrony_pihole_chrony_local_reference_state') %}
+  {%- set stratum_icon = 'mdi:layers-triple' %}
+  **Stratum {{ stratum }}** &nbsp;·&nbsp; Leap: {{ leap }} &nbsp;·&nbsp; Ref: {{ ref }} &nbsp;·&nbsp; Sources: {{ num_sources }} &nbsp;·&nbsp; GPS: {{ gps_state }}
+
+  | Tracking | Value | Current Reference | Value | Local Reference (GPS) | Value |
+  |:---------|------:|:-------------------|------:|:-----------------------|------:|
+  | Last Offset | {{ states('sensor.chrony_last_offset') }} s | Offset | {{ states('sensor.chrony_pihole_chrony_current_reference_offset') }} s | State | {{ gps_state }} |
+  | RMS Offset | {{ states('sensor.chrony_rms_offset') }} s | Margin | {{ states('sensor.chrony_pihole_chrony_current_reference_margin') }} s | Reach | {{ states('sensor.chrony_pihole_chrony_local_reference_reach') }} |
+  | Frequency | {{ states('sensor.chrony_frequency') }} ppm | Poll Interval | {{ states('sensor.chrony_pihole_chrony_current_reference_poll_interval') }} | Offset | {{ states('sensor.chrony_pihole_chrony_local_reference_offset') }} s |
+  | Skew | {{ states('sensor.chrony_skew') }} ppm | Reach | {{ states('sensor.chrony_pihole_chrony_current_reference_reach') }} | Margin | {{ states('sensor.chrony_pihole_chrony_local_reference_margin') }} s |
+  | Root Delay | {{ states('sensor.chrony_root_delay') }} s | | | | |
+  | Root Dispersion | {{ states('sensor.chrony_root_dispersion') }} s | | | | |
+
+  {%- set sources = state_attr('sensor.chrony_pihole_chrony_sources', 'sources') | default([]) %}
+  **Sources**
+
+  | Mode | State | Name | Str | Poll | Reach | Offset (s) | Margin (s) |
+  |:----:|:-----:|:-----|:---:|-----:|:-----:|-----------:|-----------:|
+  {% for s in sources %}| `{{ s.mode }}` | `{{ s.state }}` | {{ s.name }} | {{ s.stratum }} | {{ s.poll }} | {{ s.reach_human }} | {{ s.offset }} | {{ s.margin }} |
+  {% endfor %}
+  *`^` server &nbsp; `=` peer &nbsp; `#` local clock &nbsp;&nbsp; `*` synced &nbsp; `+` acceptable &nbsp; `-` excluded &nbsp; `?` unreachable*

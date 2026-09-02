@@ -190,11 +190,16 @@ sensor:
     icon: mdi:signal
     device: *chrony_device
 
-  # --- Local reference clock (mode == '#'), e.g. a GPS/PPS source ---
+  # --- First local reference clock in chrony.conf order (mode == '#') ---
+  # `first` here picks whichever '#' refclock is configured FIRST in
+  # chrony.conf, which for a NMEA + GPS/PPS HAT setup is typically NMEA (raw
+  # serial sentences, usually `noselect`/unreachable) -- NOT the GPS/PPS
+  # refclock, even though this used to be named "Local Reference". See the
+  # "Chrony GPS *" sensors below for the actual GPS/PPS status.
   # If you don't have one configured, these will report "unknown" rather
   # than erroring - that's expected, not a sign something's broken.
 
-  - name: "Chrony Local Reference State"
+  - name: "Chrony NMEA State"
     unique_id: chrony_local_ref_state
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -210,7 +215,7 @@ sensor:
     icon: mdi:chip
     device: *chrony_device
 
-  - name: "Chrony Local Reference Reach"
+  - name: "Chrony NMEA Reach"
     unique_id: chrony_local_ref_reach
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -220,7 +225,7 @@ sensor:
     icon: mdi:signal
     device: *chrony_device
 
-  - name: "Chrony Local Reference Offset"
+  - name: "Chrony NMEA Offset"
     unique_id: chrony_local_ref_offset
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -231,7 +236,7 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
-  - name: "Chrony Local Reference Margin"
+  - name: "Chrony NMEA Margin"
     unique_id: chrony_local_ref_margin
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -242,9 +247,11 @@ sensor:
     icon: mdi:ruler
     device: *chrony_device
 
-  # --- GPS fields promoted to the state topic ---
-  # These come from gps_state/gps_reach/gps_reach_human added to chrony/YOUR_HOSTNAME/state
-  # so they update at the same rate as the rest of the tracking data.
+  # --- GPS/PPS fields promoted to the state topic ---
+  # These come from gps_state/gps_reach/gps_reach_human/gps_offset/gps_margin
+  # added to chrony/YOUR_HOSTNAME/state by chrony-mqtt.sh, which always
+  # reflects the LAST '#' refclock in chrony.conf order (the GPS/PPS one), so
+  # this is the one to use for actual GPS status/offset/margin.
 
   - name: "Chrony GPS State"
     unique_id: chrony_gps_state
@@ -269,4 +276,24 @@ sensor:
     expire_after: 90
     value_template: "{{ value_json.gps_reach_human }}"
     icon: mdi:signal
+    device: *chrony_device
+
+  - name: "Chrony GPS Offset"
+    unique_id: chrony_gps_offset
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
+    value_template: "{{ value_json.gps_offset }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:clock-fast
+    device: *chrony_device
+
+  - name: "Chrony GPS Margin"
+    unique_id: chrony_gps_margin
+    state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
+    value_template: "{{ value_json.gps_margin }}"
+    unit_of_measurement: "s"
+    state_class: measurement
+    icon: mdi:ruler
     device: *chrony_device

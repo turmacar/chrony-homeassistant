@@ -113,3 +113,37 @@ Messages are published retained, so HA sensors show a value immediately on
 restart even before the next publish. Every sensor in `mqtt_chrony.yaml` sets
 `expire_after: 90` (3x the default 30s interval) so entities go `unavailable`
 if the publisher stops, instead of silently showing stale data forever.
+
+## Lovelace Card: chrony-status-card
+
+A custom card consolidating stratum/sources/GPS reach into gauges (same style
+as HA's built-in gauge card) plus a compact stats row for offsets, frequency,
+skew, and reference/GPS state -- one card instead of the multi-card dashboard
+stacks in `homeassistant/lovelace_chrony_*.yaml`.
+
+### Install
+
+```bash
+# Copy the card to HA's www directory (served at /local/)
+scp lovelace-cards/chrony-status-card.js turmacar@homeassistant.lan:/home/turmacar/HomeAssistant/hass-config/www/
+
+# Then in HA: Settings → Dashboards → ⋮ → Resources → Add resource
+#   URL: /local/chrony-status-card.js   Type: JavaScript module
+```
+
+### Usage
+
+```yaml
+type: custom:chrony-status-card
+entity_prefix: chrony
+title: "Chrony (pihole)"
+icon: mdi:clock-check-outline
+```
+
+The card auto-discovers the entity_id prefix used for the current/local
+reference and GPS sensors (HA sometimes bakes the device name into them,
+e.g. `chrony_pihole_chrony_gps_reach`) by searching for a `_local_reference_state`
+suffix. Set `ref_prefix` explicitly only if that discovery picks the wrong thing.
+
+Gauges only render for entities that exist, so this degrades gracefully if
+you don't have a GPS refclock configured (no GPS Reach gauge, no GPS stat).
