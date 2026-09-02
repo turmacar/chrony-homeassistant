@@ -1,6 +1,6 @@
 # chrony-homeassistant
 
-NTP server monitoring stack. A Raspberry Pi running chrony (optionally with a GPS HAT) publishes its status to MQTT every 30 seconds, and Home Assistant consumes that data to expose it as a device with individual sensors.
+NTP server monitoring stack. A Raspberry Pi running chrony (with a GPS input ) publishes its status to MQTT every 30 seconds, and Home Assistant consumes that data to expose it as a device with individual sensors.
 
 ## Architecture
 
@@ -48,9 +48,9 @@ The topic base defaults to `chrony/<hostname>` using the Pi's hostname.
 sudo scripts/install.sh
 ```
 
-This copies the script and helper binaries to `/usr/local/bin/`, installs the systemd service and timer to `/etc/systemd/system/`, and enables the timer immediately.
+This copies the script and helper binaries to `/usr/local/bin/`, installs the systemd service to `/etc/systemd/system/`, and enables it immediately.
 
-The timer fires 15 seconds after boot and then every 30 seconds.
+The service starts at boot, publishes every `INTERVAL` seconds (default 30, set in `/etc/default/chrony-mqtt`) via its own internal loop, and restarts automatically (`Restart=on-failure`) if it ever crashes.
 
 ### Watch helpers
 
@@ -71,9 +71,36 @@ chronyc_sources.sh    # live view of `chronyc sources -v`
 
 The integration creates a single device called "Chrony (YOUR_HOSTNAME)" containing sensors for stratum, offsets, frequency, skew, root delay/dispersion, source list, current reference, and local reference clock (GPS/PPS).
 
-## GPS HAT
+## GPS
+
+Built using ATGM332D 5N31 GPS Beidou GLOSNASS receiving module
 
 If you have a GPIO GPS HAT providing a local reference clock, it appears in chrony sources with mode `#`. The "Chrony Local Reference" sensors track its state and reach automatically. Without one, those sensors report "unknown", which is expected.
+
+**gpsd must run persistently**, not just on-demand. Many distros only enable
+`gpsd.socket` by default, which starts `gpsd` when a client connects and lets
+it die when idle -- that stops it feeding the SHM/PPS data chrony's refclocks
+read, even with a good satellite fix. Enable the service itself:
+
+```bash
+sudo systemctl enable --now gpsd.service
+```
+
+`gpsd`'s packaged unit also ships with no restart policy. Add one via a drop-in
+instead of editing the packaged unit file:
+
+```bash
+sudo systemctl edit gpsd.service
+```
+
+```ini
+[Service]
+Restart=on-failure
+RestartSec=5s
+```
+
+If GPS reach ever drops to 0 in `chronyc sources`, check
+`systemctl is-active gpsd.service` before suspecting the antenna/hardware.
 
 ## MQTT topics
 
@@ -81,3 +108,8 @@ If you have a GPIO GPS HAT providing a local reference clock, it appears in chro
 |-------|---------|
 | `chrony/<hostname>/state` | JSON tracking summary (stratum, offsets, frequency, etc.) |
 | `chrony/<hostname>/sources` | JSON array of all chrony sources with reach decoded |
+
+Messages are published retained, so HA sensors show a value immediately on
+restart even before the next publish. Every sensor in `mqtt_chrony.yaml` sets
+`expire_after: 90` (3x the default 30s interval) so entities go `unavailable`
+if the publisher stops, instead of silently showing stale data forever.

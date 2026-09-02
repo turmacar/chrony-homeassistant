@@ -12,6 +12,7 @@ sensor:
   - name: "Chrony Stratum"
     unique_id: chrony_stratum
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.stratum }}"
     icon: mdi:layers-triple
     state_class: measurement
@@ -24,6 +25,7 @@ sensor:
   - name: "Chrony Leap Status"
     unique_id: chrony_leap_status
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.leap_status }}"
     icon: mdi:clock-alert-outline
     device: *chrony_device
@@ -31,6 +33,7 @@ sensor:
   - name: "Chrony Last Offset"
     unique_id: chrony_last_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.last_offset }}"
     unit_of_measurement: "s"
     state_class: measurement
@@ -40,6 +43,7 @@ sensor:
   - name: "Chrony System Time"
     unique_id: chrony_system_time
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.system_time }}"
     unit_of_measurement: "s"
     state_class: measurement
@@ -49,6 +53,7 @@ sensor:
   - name: "Chrony RMS Offset"
     unique_id: chrony_rms_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.rms_offset }}"
     unit_of_measurement: "s"
     state_class: measurement
@@ -58,6 +63,7 @@ sensor:
   - name: "Chrony Frequency"
     unique_id: chrony_frequency
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.frequency }}"
     unit_of_measurement: "ppm"
     state_class: measurement
@@ -67,6 +73,7 @@ sensor:
   - name: "Chrony Skew"
     unique_id: chrony_skew
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.skew }}"
     unit_of_measurement: "ppm"
     state_class: measurement
@@ -76,6 +83,7 @@ sensor:
   - name: "Chrony Root Delay"
     unique_id: chrony_root_delay
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.root_delay }}"
     unit_of_measurement: "s"
     state_class: measurement
@@ -85,6 +93,7 @@ sensor:
   - name: "Chrony Root Dispersion"
     unique_id: chrony_root_dispersion
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.root_dispersion }}"
     unit_of_measurement: "s"
     state_class: measurement
@@ -94,6 +103,7 @@ sensor:
   - name: "Chrony Reference Source"
     unique_id: chrony_ref_source
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.ref_source }}"
     icon: mdi:satellite-variant
     device: *chrony_device
@@ -101,6 +111,7 @@ sensor:
   - name: "Chrony Number of Sources"
     unique_id: chrony_num_sources
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.num_sources }}"
     state_class: measurement
     icon: mdi:counter
@@ -113,6 +124,7 @@ sensor:
   - name: "Chrony Sources"
     unique_id: chrony_sources_detail
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: "{{ value_json | length }}"
     json_attributes_topic: "chrony/YOUR_HOSTNAME/sources"
     json_attributes_template: >-
@@ -138,6 +150,7 @@ sensor:
   - name: "Chrony Current Reference Offset"
     unique_id: chrony_current_ref_offset
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('state','equalto','*') | list | first
           | default({})).get('offset', 'unknown') }}
@@ -148,6 +161,7 @@ sensor:
   - name: "Chrony Current Reference Margin"
     unique_id: chrony_current_ref_margin
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('state','equalto','*') | list | first
           | default({})).get('margin', 'unknown') }}
@@ -158,6 +172,7 @@ sensor:
   - name: "Chrony Current Reference Poll Interval"
     unique_id: chrony_current_ref_poll
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('state','equalto','*') | list | first
           | default({})).get('poll', 'unknown') }}
@@ -168,6 +183,7 @@ sensor:
   - name: "Chrony Current Reference Reach"
     unique_id: chrony_current_ref_reach
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('state','equalto','*') | list | first
           | default({})).get('reach_human', 'unknown') }}
@@ -181,6 +197,7 @@ sensor:
   - name: "Chrony Local Reference State"
     unique_id: chrony_local_ref_state
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {%- set state_map = {'*': 'synced', '+': 'acceptable', '-': 'excluded',
                             '?': 'unreachable', 'x': 'falseticker', '~': 'too variable'} -%}
@@ -196,6 +213,7 @@ sensor:
   - name: "Chrony Local Reference Reach"
     unique_id: chrony_local_ref_reach
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('mode','equalto','#') | list | first
           | default({})).get('reach_human', 'unknown') }}
@@ -205,6 +223,7 @@ sensor:
   - name: "Chrony Local Reference Offset"
     unique_id: chrony_local_ref_offset
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('mode','equalto','#') | list | first
           | default({})).get('offset', 'unknown') }}
@@ -215,6 +234,7 @@ sensor:
   - name: "Chrony Local Reference Margin"
     unique_id: chrony_local_ref_margin
     state_topic: "chrony/YOUR_HOSTNAME/sources"
+    expire_after: 90
     value_template: >-
       {{ (value_json | selectattr('mode','equalto','#') | list | first
           | default({})).get('margin', 'unknown') }}
@@ -229,6 +249,7 @@ sensor:
   - name: "Chrony GPS State"
     unique_id: chrony_gps_state
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.gps_state }}"
     icon: mdi:satellite-variant
     device: *chrony_device
@@ -236,6 +257,7 @@ sensor:
   - name: "Chrony GPS Reach"
     unique_id: chrony_gps_reach
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.gps_reach }}"
     state_class: measurement
     icon: mdi:signal
@@ -244,6 +266,7 @@ sensor:
   - name: "Chrony GPS Reach Human"
     unique_id: chrony_gps_reach_human
     state_topic: "chrony/YOUR_HOSTNAME/state"
+    expire_after: 90
     value_template: "{{ value_json.gps_reach_human }}"
     icon: mdi:signal
     device: *chrony_device

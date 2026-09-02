@@ -10,3 +10,6 @@ EnvironmentFile=-/etc/default/chrony-mqtt
 ExecStart=/usr/local/bin/chrony-mqtt.sh
 Restart=on-failure
 RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

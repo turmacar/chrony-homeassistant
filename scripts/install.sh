@@ -15,7 +15,6 @@ install -m 755 "$SCRIPT_DIR/chronyc_tracking.sh" /usr/local/bin/chronyc_tracking
 install -m 755 "$SCRIPT_DIR/chronyc_sources.sh"  /usr/local/bin/chronyc_sources.sh
 
 install -m 644 "$SCRIPT_DIR/chrony-mqtt.service" /etc/systemd/system/chrony-mqtt.service
-install -m 644 "$SCRIPT_DIR/chrony-mqtt.timer"   /etc/systemd/system/chrony-mqtt.timer
 
 # Only seed the env file if it doesn't already exist, so re-running this
 # script never clobbers a configured broker host/credentials.
@@ -25,7 +24,7 @@ if [ ! -f /etc/default/chrony-mqtt ]; then
 fi
 
 systemctl daemon-reload
-systemctl enable --now chrony-mqtt.timer
+systemctl enable --now chrony-mqtt.service
 
-echo "Installed. Timer status:"
-systemctl status chrony-mqtt.timer --no-pager
+echo "Installed. Service status:"
+systemctl status chrony-mqtt.service --no-pager
