@@ -48,7 +48,6 @@ class ChronyStatusCard extends HTMLElement {
       this._render();
     } else {
       for (const card of this._cards) card.hass = hass;
-      this._updateFlippedGauges();
       this._renderStats();
       this._renderGpsInfo();
     }
@@ -112,84 +111,6 @@ class ChronyStatusCard extends HTMLElement {
     return n === null ? "-" : n.toFixed(digits);
   }
 
-  // -- Flipped gauge (low value = good = right/green side) --------------------
-  // Native hui-gauge-card always maps min->left, max->right; there's no way to
-  // reverse it. This clones HA's actual <ha-gauge> geometry/styling exactly
-  // (same viewBox, radius, stroke-width, needle path, label/value styling) and
-  // just mirrors the angle math so min lands on the right instead of the left.
-
-  _polarToCartesian(r, angleDeg) {
-    const rad = (angleDeg * Math.PI) / 180;
-    // mirrored version of ha-gauge's own `x = -r*cos, y = -r*sin`
-    return { x: r * Math.cos(rad), y: -r * Math.sin(rad) };
-  }
-
-  // angle 0deg = right (min), angle 180deg = left (max) -- the flip
-  _flippedAngle(value, min, max) {
-    const frac = Math.max(0, Math.min(1, (value - min) / (max - min)));
-    return frac * 180;
-  }
-
-  _arcPath(r, angleStart, angleEnd) {
-    const p1 = this._polarToCartesian(r, angleStart);
-    const p2 = this._polarToCartesian(r, angleEnd);
-    const largeArc = angleEnd - angleStart > 180 ? 1 : 0;
-    return `M ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 0 ${p2.x} ${p2.y}`;
-  }
-
-  _flippedGaugeMarkup(entityId, name, min, max, severity) {
-    // Exactly ha-gauge's own constants (viewBox "-50 -50 100 55", arcRadius 40,
-    // stroke-width 12) so the arc renders at the same size/thickness as the
-    // native Sources/GPS Reach gauges next to it.
-    const r = 40;
-    const bounds = [
-      { from: min, to: severity.yellow, color: "var(--success-color)" },
-      { from: severity.yellow, to: severity.red, color: "var(--warning-color)" },
-      { from: severity.red, to: max, color: "var(--error-color)" },
-    ];
-    const bands = bounds
-      .filter((b) => b.to > b.from)
-      .map((b) => {
-        const a1 = this._flippedAngle(b.from, min, max);
-        const a2 = this._flippedAngle(b.to, min, max);
-        return `<path d="${this._arcPath(r, a1, a2)}" fill="none" stroke="${b.color}" stroke-width="12" stroke-linecap="butt"/>`;
-      })
-      .join("");
-    const slug = entityId.replace(/[^a-zA-Z0-9]/g, "_");
-    // Needle path is ha-gauge's own paddle shape, mirrored in x (and sweep
-    // flags flipped to match) since it sits at the right/min side at rest.
-    const needlePath = "M 34,-3 L 40,-1 A 1,1,0,0,1,40,1 L 34,3 A 2,2,0,0,1,34,-3 Z";
-    return `
-      <div class="gauge-cell flipped-gauge" data-entity="${entityId}" data-min="${min}" data-max="${max}">
-        <div class="fg-arc">
-          <svg viewBox="-50 -50 100 55">
-            ${bands}
-            <path id="needle_${slug}" class="fg-needle" d="${needlePath}" style="transform: rotate(0deg)"/>
-          </svg>
-          <div class="fg-value" id="value_${slug}">-</div>
-        </div>
-        <p class="fg-name">${name}</p>
-      </div>`;
-  }
-
-  _updateFlippedGauges() {
-    for (const el of this.shadowRoot.querySelectorAll(".flipped-gauge")) {
-      const entityId = el.dataset.entity;
-      const min = parseFloat(el.dataset.min);
-      const max = parseFloat(el.dataset.max);
-      const value = this._num(entityId);
-      const slug = entityId.replace(/[^a-zA-Z0-9]/g, "_");
-      const needle = el.querySelector(`#needle_${slug}`);
-      const valueEl = el.querySelector(`#value_${slug}`);
-      if (valueEl) valueEl.textContent = value === null ? "-" : value;
-      if (needle) {
-        const angle = this._flippedAngle(value === null ? min : value, min, max);
-        // mirrored shape needs the opposite (CCW) rotation direction to sweep the right way
-        needle.style.transform = `rotate(${-angle}deg)`;
-      }
-    }
-  }
-
   // -- Build ------------------------------------------------------------------
 
   async _render() {
@@ -200,13 +121,13 @@ class ChronyStatusCard extends HTMLElement {
     this._build();
   }
 
-  _gaugeCard(entityId, name, severity, max = 100, unit) {
+  _gaugeCard(entityId, name, severity, max = 100, min = 0, unit) {
     const card = this._helpers.createCardElement({
       type: "gauge",
       entity: entityId,
       name,
       needle: true,
-      min: 0,
+      min,
       max,
       severity,
       ...(unit ? { unit } : {}),
@@ -220,10 +141,10 @@ class ChronyStatusCard extends HTMLElement {
     this._cards = [];
     const { title = "Chrony NTP", icon = "mdi:clock-check-outline" } = this._config;
 
-    const stratumId = this._id("stratum");
-    const hasStratum = !!this._st(stratumId);
-
     const gaugeDefs = [
+      // Chrony/NTP stratum semantics: 1 = local reference clock (GPS/PPS),
+      // 2-15 = synced via a chain of remote servers, 16 = unsynchronized.
+      { id: this._id("stratum"), name: "Stratum", severity: { green: 1, yellow: 2, red: 15 }, max: 16, min: 1 },
       { id: this._id("number_of_sources"), name: "Sources", severity: { red: 0, yellow: 2, green: 4 }, max: 8 },
     ].filter((d) => this._st(d.id));
 
@@ -262,40 +183,6 @@ class ChronyStatusCard extends HTMLElement {
           --ha-card-box-shadow: none;
           --ha-card-border-radius: 0;
           --ha-card-border-width: 0;
-        }
-        .flipped-gauge {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 12px;
-          box-sizing: border-box;
-        }
-        .fg-arc { position: relative; width: 100%; max-width: 250px; }
-        .fg-arc svg { display: block; width: 100%; overflow: visible; }
-        .fg-needle {
-          fill: var(--primary-text-color);
-          stroke: var(--card-background-color);
-          stroke-width: 1;
-          stroke-linecap: round;
-          transform-origin: 0 0;
-        }
-        .fg-value {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 10%;
-          text-align: center;
-          font-size: var(--ha-font-size-l, 1.5rem);
-          color: var(--primary-text-color);
-        }
-        .fg-name {
-          width: 100%;
-          font-size: var(--ha-font-size-m, 1rem);
-          margin: 4px 0 0;
-          text-align: center;
-          color: var(--primary-text-color);
         }
         .divider {
           border: none;
@@ -337,17 +224,12 @@ class ChronyStatusCard extends HTMLElement {
       </ha-card>`;
 
     const primaryRow = this.shadowRoot.querySelector(".gauge-row.primary");
-    if (hasStratum) {
-      primaryRow.insertAdjacentHTML("beforeend", this._flippedGaugeMarkup(stratumId, "Stratum", 1, 8, { yellow: 2, red: 4 }));
-    }
     for (const def of gaugeDefs) {
       const cell = document.createElement("div");
       cell.className = "gauge-cell";
-      cell.appendChild(this._gaugeCard(def.id, def.name, def.severity, def.max));
+      cell.appendChild(this._gaugeCard(def.id, def.name, def.severity, def.max, def.min));
       primaryRow.appendChild(cell);
     }
-
-    if (hasStratum) this._updateFlippedGauges();
 
     if (hasGps) {
       const gpsGaugeCell = this.shadowRoot.querySelector(".gps-gauge");
