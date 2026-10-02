@@ -123,13 +123,32 @@ stacks in `homeassistant/lovelace_chrony_*.yaml`.
 
 ### Install
 
+#### HACS (recommended)
+
+1. HACS -> top-right menu -> **Custom repositories**
+2. Repository: `https://github.com/turmacar/chrony-homeassistant`, Type: **Dashboard**
+3. Download "Chrony Status Card", then reload the browser when prompted
+
+HACS registers the resource and versions its URL on every update. The card lives in `dist/`.
+
+#### Manual
+
 ```bash
 # Copy the card to HA's www directory (served at /local/)
-scp lovelace-cards/chrony-status-card.js turmacar@homeassistant.lan:/home/turmacar/HomeAssistant/hass-config/www/
+scp dist/chrony-status-card.js ${HA_USER}@${HA_HOST}:<ha_config>/www/
 
-# Then in HA: Settings → Dashboards → ⋮ → Resources → Add resource
+# Then in HA: Settings -> Dashboards -> three-dot menu -> Resources -> Add resource
 #   URL: /local/chrony-status-card.js   Type: JavaScript module
+# After redeploying, bump a ?v=N query on that URL so browsers fetch the new version.
 ```
+
+Don't keep both installs: remove the manual resource and `www/` file before switching to HACS.
+
+### Releasing
+
+Versions are plain semver with no `v` prefix. Bump `CARD_VERSION` in
+`dist/chrony-status-card.js`, commit, push, then `git tag X.Y.Z && git push origin X.Y.Z`;
+`.github/workflows/release.yaml` publishes the GitHub release.
 
 ### Usage
 

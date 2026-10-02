@@ -14,6 +14,8 @@
  *   title: string (optional, defaults to "Chrony NTP")
  *   icon: string (optional, defaults to "mdi:clock-check-outline")
  */
+const CARD_VERSION = "0.1.0";
+console.info(`%c chrony-status-card %c ${CARD_VERSION} `, "background:#44739e;color:#fff", "background:#ddd;color:#000");
 class ChronyStatusCard extends HTMLElement {
   constructor() {
     super();
@@ -305,7 +307,9 @@ class ChronyStatusCard extends HTMLElement {
   getCardSize() { return 3; }
 }
 
-customElements.define("chrony-status-card", ChronyStatusCard);
+if (!customElements.get("chrony-status-card")) {
+  customElements.define("chrony-status-card", ChronyStatusCard);
+}
 
 window.customCards = window.customCards || [];
 window.customCards.push({
