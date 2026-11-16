@@ -75,7 +75,7 @@ The integration creates a single device called "Chrony (YOUR_HOSTNAME)" containi
 
 Built using ATGM332D 5N31 GPS Beidou GLOSNASS receiving module
 
-If you have a GPIO GPS HAT providing a local reference clock, it appears in chrony sources with mode `#`. The "Chrony Local Reference" sensors track its state and reach automatically. Without one, those sensors report "unknown", which is expected.
+If you have a GPIO GPS HAT providing a local reference clock, it appears in chrony sources with mode `#`. The "GPS" and "NMEA" sensors track its state and reach automatically. Without one, those sensors report "unknown", which is expected.
 
 **gpsd must run persistently**, not just on-demand. Many distros only enable
 `gpsd.socket` by default, which starts `gpsd` when a client connects and lets

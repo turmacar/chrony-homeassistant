@@ -9,7 +9,7 @@
 # as one device (Settings > Devices & Services > Devices > Chrony).
 
 sensor:
-  - name: "Chrony Stratum"
+  - name: "Stratum"
     unique_id: chrony_stratum
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -22,7 +22,7 @@ sensor:
       manufacturer: "chrony"
       model: "NTP client"
 
-  - name: "Chrony Leap Status"
+  - name: "Leap Status"
     unique_id: chrony_leap_status
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -30,7 +30,7 @@ sensor:
     icon: mdi:clock-alert-outline
     device: *chrony_device
 
-  - name: "Chrony Last Offset"
+  - name: "Last Offset"
     unique_id: chrony_last_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -40,7 +40,7 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
-  - name: "Chrony System Time"
+  - name: "System Time"
     unique_id: chrony_system_time
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -50,7 +50,7 @@ sensor:
     icon: mdi:clock-edit-outline
     device: *chrony_device
 
-  - name: "Chrony RMS Offset"
+  - name: "RMS Offset"
     unique_id: chrony_rms_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -60,7 +60,7 @@ sensor:
     icon: mdi:sigma
     device: *chrony_device
 
-  - name: "Chrony Frequency"
+  - name: "Frequency"
     unique_id: chrony_frequency
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -70,7 +70,7 @@ sensor:
     icon: mdi:sine-wave
     device: *chrony_device
 
-  - name: "Chrony Skew"
+  - name: "Skew"
     unique_id: chrony_skew
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -80,7 +80,7 @@ sensor:
     icon: mdi:pulse
     device: *chrony_device
 
-  - name: "Chrony Root Delay"
+  - name: "Root Delay"
     unique_id: chrony_root_delay
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -90,7 +90,7 @@ sensor:
     icon: mdi:transit-connection-variant
     device: *chrony_device
 
-  - name: "Chrony Root Dispersion"
+  - name: "Root Dispersion"
     unique_id: chrony_root_dispersion
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -100,7 +100,7 @@ sensor:
     icon: mdi:blur
     device: *chrony_device
 
-  - name: "Chrony Reference Source"
+  - name: "Reference Source"
     unique_id: chrony_ref_source
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -108,7 +108,7 @@ sensor:
     icon: mdi:satellite-variant
     device: *chrony_device
 
-  - name: "Chrony Number of Sources"
+  - name: "Number of Sources"
     unique_id: chrony_num_sources
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -121,7 +121,7 @@ sensor:
   # from `chronyc -c sources`, exposed as this sensor's attributes.
   # mode_display/state_display are computed here via lookup maps, translating
   # chrony's single-character codes into plaintext alongside the raw symbol.
-  - name: "Chrony Sources"
+  - name: "Sources"
     unique_id: chrony_sources_detail
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -147,7 +147,7 @@ sensor:
   # fields individually. If no source is currently selected, each of
   # these reports "unknown" rather than erroring.
 
-  - name: "Chrony Current Reference Offset"
+  - name: "Current Reference Offset"
     unique_id: chrony_current_ref_offset
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -158,7 +158,7 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
-  - name: "Chrony Current Reference Margin"
+  - name: "Current Reference Margin"
     unique_id: chrony_current_ref_margin
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -169,7 +169,7 @@ sensor:
     icon: mdi:ruler
     device: *chrony_device
 
-  - name: "Chrony Current Reference Poll Interval"
+  - name: "Current Reference Poll Interval"
     unique_id: chrony_current_ref_poll
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -180,7 +180,7 @@ sensor:
     icon: mdi:timer-sync-outline
     device: *chrony_device
 
-  - name: "Chrony Current Reference Reach"
+  - name: "Current Reference Reach"
     unique_id: chrony_current_ref_reach
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -199,7 +199,7 @@ sensor:
   # If you don't have one configured, these will report "unknown" rather
   # than erroring - that's expected, not a sign something's broken.
 
-  - name: "Chrony NMEA State"
+  - name: "NMEA State"
     unique_id: chrony_local_ref_state
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -215,7 +215,7 @@ sensor:
     icon: mdi:chip
     device: *chrony_device
 
-  - name: "Chrony NMEA Reach"
+  - name: "NMEA Reach"
     unique_id: chrony_local_ref_reach
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -225,7 +225,7 @@ sensor:
     icon: mdi:signal
     device: *chrony_device
 
-  - name: "Chrony NMEA Offset"
+  - name: "NMEA Offset"
     unique_id: chrony_local_ref_offset
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -236,7 +236,7 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
-  - name: "Chrony NMEA Margin"
+  - name: "NMEA Margin"
     unique_id: chrony_local_ref_margin
     state_topic: "chrony/YOUR_HOSTNAME/sources"
     expire_after: 90
@@ -253,7 +253,7 @@ sensor:
   # reflects the LAST '#' refclock in chrony.conf order (the GPS/PPS one), so
   # this is the one to use for actual GPS status/offset/margin.
 
-  - name: "Chrony GPS State"
+  - name: "GPS State"
     unique_id: chrony_gps_state
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -261,7 +261,7 @@ sensor:
     icon: mdi:satellite-variant
     device: *chrony_device
 
-  - name: "Chrony GPS Reach"
+  - name: "GPS Reach"
     unique_id: chrony_gps_reach
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -270,7 +270,7 @@ sensor:
     icon: mdi:signal
     device: *chrony_device
 
-  - name: "Chrony GPS Reach Human"
+  - name: "GPS Reach Human"
     unique_id: chrony_gps_reach_human
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -278,7 +278,7 @@ sensor:
     icon: mdi:signal
     device: *chrony_device
 
-  - name: "Chrony GPS Offset"
+  - name: "GPS Offset"
     unique_id: chrony_gps_offset
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90
@@ -288,7 +288,7 @@ sensor:
     icon: mdi:clock-fast
     device: *chrony_device
 
-  - name: "Chrony GPS Margin"
+  - name: "GPS Margin"
     unique_id: chrony_gps_margin
     state_topic: "chrony/YOUR_HOSTNAME/state"
     expire_after: 90

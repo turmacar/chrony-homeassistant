@@ -59,7 +59,7 @@ poll_and_publish() {
   #         Frequency ResidualFreq Skew RootDelay RootDispersion UpdateInterval LeapStatus
   IFS=',' read -r ref_id ref_ip stratum ref_time sys_time last_offset \
     rms_offset frequency residual_freq skew root_delay root_dispersion \
-    update_interval leap_status < <(chronyc -c tracking)
+    update_interval leap_status < <(chronyc -n -c tracking)
 
   ref_source="unknown"
   num_sources=0
@@ -103,7 +103,8 @@ poll_and_publish() {
     entry="{\"mode\":\"$mode\",\"state\":\"$state\",\"name\":\"$local_name\",\"stratum\":$src_stratum,\"poll\":$poll,\"reach\":\"$reach\",\"reach_human\":\"$rh\",\"last_rx\":\"$lastrx\",\"offset\":$offset,\"offset_stdev\":$offset_stdev,\"margin\":$margin}"
     if $first; then sources_json="$sources_json$entry"; first=false
     else sources_json="$sources_json,$entry"; fi
-  done < <(chronyc -c sources)
+  # -n: names come from name_cache instead of a PTR lookup per source every poll
+  done < <(chronyc -n -c sources)
   sources_json="$sources_json]"
 
   publish "$MQTT_BASE_TOPIC/sources" "$sources_json"
